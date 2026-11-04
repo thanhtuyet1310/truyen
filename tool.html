@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #fdeef1; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .card { background: #ffffff; border-radius: 20px; padding: 35px 30px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
+        .card { background: #ffffff; border-radius: 20px; padding: 35px 30px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
         .title { text-align: center; font-size: 24px; font-weight: 700; color: #bd2868; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .form-group { margin-bottom: 20px; }
         label.form-label { display: block; font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px; }
@@ -17,12 +17,12 @@
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
         .checkbox-group input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: #bd2868; cursor: pointer; }
         .checkbox-label { font-size: 14px; font-weight: 600; color: #333; }
-        .result-box { background-color: #fff0f5; border: 1px dashed #bd2868; border-radius: 10px; padding: 12px; margin-top: 15px; word-break: break-all; display: none; }
-        .result-title { font-size: 12px; font-weight: bold; color: #bd2868; margin-bottom: 5px; }
-        .result-url { font-size: 13px; color: #333; font-weight: 500; }
-        .btn-submit { width: 100%; background-color: #bd2868; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-submit { width: 100%; background-color: #bd2868; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
         .btn-submit:hover { background-color: #a02056; }
-        .btn-copy { width: 100%; background-color: #4caf50; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
+        .footer-link { text-align: center; margin-top: 15px; }
+        .footer-link a { color: #aaa; font-size: 13px; text-decoration: none; cursor: pointer; }
+        .footer-link a:hover { color: #bd2868; }
     </style>
 </head>
 <body>
@@ -39,14 +39,14 @@
 
         <div class="form-group">
             <label class="form-label">Link truyện gốc</label>
-            <input type="text" id="originUrl" placeholder="https://truyenhd.cc/truyen/chim-tuoc-trong-tay-ao/" oninput="processLink()">
-            <div class="sub-text">Dán link vào — tên truyện & link mới sẽ tự điền 🪄</div>
+            <input type="text" id="originUrl" placeholder="https://cunconthichanrau.com/novel/chim-tuoc-trong-tay-ao" oninput="autoFillName()">
+            <div class="sub-text">Dán link vào — tên truyện sẽ tự điền 🪄</div>
         </div>
 
         <div class="form-group">
-            <label class="form-label">Tên bộ truyện (slug)</label>
-            <input type="text" id="slugName" placeholder="chim-tuoc-trong-tay-ao" oninput="updateResultLink()">
-            <div class="sub-text">Dùng làm tên thư mục/file trên GitHub</div>
+            <label class="form-label">Tên bộ truyện</label>
+            <input type="text" id="storyName" placeholder="Tự động điền khi dán link...">
+            <div class="sub-text">Chỉnh tay nếu tên chưa đúng</div>
         </div>
 
         <div class="checkbox-group">
@@ -57,63 +57,74 @@
             </div>
         </div>
 
-        <div class="result-box" id="resultBox">
-            <div class="result-title">LINK DẪN MỚI CỦA BẠN:</div>
-            <div class="result-url" id="newUrlText">https://thanhtuyet1310.github.io/truyen/</div>
-            <button class="btn-copy" onclick="copyLink()">📋 Sao chép link mới</button>
-        </div>
+        <button class="btn-submit" id="submitBtn" onclick="createLinkDirectly()">✨ Tạo link ngay</button>
 
-        <button class="btn-submit" onclick="generateAndDownload()">✨ Tải file HTML để up lên GitHub</button>
+        <div class="footer-link">
+            <a onclick="setupToken()">Đổi token</a>
+        </div>
     </div>
 
     <script>
-        const BASE_DOMAIN = "https://thanhtuyet1310.github.io/truyen/";
+        const REPO_OWNER = "thanhtuyet1310";
+        const REPO_NAME = "truyen";
 
-        function processLink() {
+        // Chuyển tên có dấu thành dạng slug không dấu
+        function toSlug(str) {
+            str = str.toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/[^a-z0-9\s-]/g, '');
+            return str.trim().replace(/\s+/g, '-');
+        }
+
+        // Tự điền tên truyện khi dán link
+        function autoFillName() {
             const urlInput = document.getElementById('originUrl').value.trim();
             if (!urlInput) return;
-
             try {
                 const urlObj = new URL(urlInput);
-                const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
-                
-                if (pathParts.length > 0) {
-                    let slug = pathParts[pathParts.length - 1];
-                    slug = slug.replace(/\.html?$/i, '');
-                    document.getElementById('slugName').value = slug;
-                    updateResultLink();
+                const parts = urlObj.pathname.split('/').filter(p => p.length > 0);
+                if (parts.length > 0) {
+                    let rawSlug = parts[parts.length - 1].replace(/\.html?$/i, '');
+                    document.getElementById('storyName').value = decodeURIComponent(rawSlug).replace(/-/g, ' ');
                 }
             } catch (e) {}
         }
 
-        function updateResultLink() {
-            const slug = document.getElementById('slugName').value.trim();
-            const resultBox = document.getElementById('resultBox');
-            const newUrlText = document.getElementById('newUrlText');
-
-            if (slug) {
-                newUrlText.innerText = BASE_DOMAIN + slug + "/";
-                resultBox.style.display = "block";
-            } else {
-                resultBox.style.display = "none";
+        // Cài đặt Token
+        function setupToken() {
+            let token = prompt("Nhập GitHub Personal Access Token của bạn:");
+            if (token) {
+                localStorage.setItem("gh_token", token.trim());
+                alert("Đã lưu token!");
             }
         }
 
-        function copyLink() {
-            const linkText = document.getElementById('newUrlText').innerText;
-            navigator.clipboard.writeText(linkText);
-            alert('Đã sao chép link: ' + linkText);
-        }
+        // Tạo link tự động đẩy lên GitHub
+        async function createLinkDirectly() {
+            let token = localStorage.getItem("gh_token");
+            if (!token) {
+                token = prompt("Vui lòng nhập GitHub Personal Access Token của bạn để kết nối hệ thống:");
+                if (!token) return;
+                localStorage.setItem("gh_token", token.trim());
+            }
 
-        function generateAndDownload() {
             const targetUrl = document.getElementById('originUrl').value.trim();
-            const slug = document.getElementById('slugName').value.trim();
+            const rawName = document.getElementById('storyName').value.trim();
             const isVpn = document.getElementById('vpnRequired').checked;
 
-            if (!targetUrl || !slug) {
-                alert('Vui lòng nhập Link truyện gốc!');
+            if (!targetUrl || !rawName) {
+                alert("Vui lòng điền Link truyện gốc!");
                 return;
             }
+
+            const slug = toSlug(rawName);
+            const filePath = `${slug}/index.html`;
 
             let extraNotice = '';
             if (isVpn) {
@@ -127,9 +138,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đang chuyển hướng...</title>
     <meta http-equiv="refresh" content="1; url=${targetUrl}">
-    <script>
-        setTimeout(() => { window.location.href = "${targetUrl}"; }, 1000);
-    <\/script>
+    <script>setTimeout(() => { window.location.href = "${targetUrl}"; }, 1000);<\/script>
 </head>
 <body style="font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #fff0f5;">
     <h2 style="color: #bd2868;">Đang chuyển hướng đến trang đọc truyện...</h2>
@@ -138,11 +147,49 @@
 </body>
 </html>`;
 
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = "index.html"; 
-            link.click();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ Đang tạo link...";
+
+            try {
+                let sha = "";
+                const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+                    headers: { "Authorization": `token ${token}` }
+                });
+                if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    sha = checkData.sha;
+                }
+
+                const bodyData = {
+                    message: `Auto create link for ${slug}`,
+                    content: btoa(unescape(encodeURIComponent(htmlContent)))
+                };
+                if (sha) bodyData.sha = sha;
+
+                const uploadRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (uploadRes.ok) {
+                    const finalUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${slug}/`;
+                    navigator.clipboard.writeText(finalUrl);
+                    alert(`✨ ĐÃ TẠO LINK THÀNH CÔNG!\n\nLink mới của bạn là:\n${finalUrl}\n\n(Đã tự động sao chép link. Sau 1-2 phút GitHub cập nhật xong là bấm vào được ngay!)`);
+                } else {
+                    const errData = await uploadRes.json();
+                    alert("⚠️ Lỗi: Token không hợp lệ hoặc sai quyền. Chi tiết: " + errData.message);
+                }
+            } catch (err) {
+                alert("⚠️ Có lỗi xảy ra: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "✨ Tạo link ngay";
+            }
         }
     </script>
 </body>
