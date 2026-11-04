@@ -6,42 +6,55 @@
     <title>Tạo Link Truyện</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #fdeef1; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        body { background-color: #fdeef1; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; transition: background 0.3s; }
         .card { background: #ffffff; border-radius: 20px; padding: 35px 30px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
-        .title { text-align: center; font-size: 24px; font-weight: 700; color: #bd2868; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .title { text-align: center; font-size: 24px; font-weight: 700; color: #bd2868; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: color 0.3s; }
         .form-group { margin-bottom: 20px; }
         label.form-label { display: block; font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px; }
-        input[type="text"], select { width: 100%; padding: 12px 15px; border: 1.5px solid #f2cfd9; border-radius: 10px; font-size: 14px; outline: none; background-color: #fff; }
+        input[type="text"], select { width: 100%; padding: 12px 15px; border: 1.5px solid #f2cfd9; border-radius: 10px; font-size: 14px; outline: none; background-color: #fff; transition: border-color 0.3s; }
         input[type="text"]:focus, select:focus { border-color: #bd2868; }
         .sub-text { font-size: 12px; color: #888; margin-top: 5px; }
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
         .checkbox-group input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: #bd2868; cursor: pointer; }
         .checkbox-label { font-size: 14px; font-weight: 600; color: #333; }
-        .btn-submit { width: 100%; background-color: #bd2868; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
-        .btn-submit:hover { background-color: #a02056; }
+        .btn-submit { width: 100%; background-color: #bd2868; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+        .btn-submit:hover { opacity: 0.9; }
         .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
         
         /* Khung hiển thị kết quả copy */
         .result-box { background-color: #fff0f5; border: 1px dashed #bd2868; border-radius: 10px; padding: 12px; margin-top: 15px; word-break: break-all; display: none; }
         .result-title { font-size: 12px; font-weight: bold; color: #bd2868; margin-bottom: 5px; }
         .result-url { font-size: 13px; color: #333; font-weight: 500; margin-bottom: 8px; }
-        .btn-copy { width: 100%; background-color: #4caf50; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-copy { width: 100%; background-color: #4caf50; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
         .btn-copy:hover { background-color: #45a049; }
 
         .footer-link { text-align: center; margin-top: 15px; }
         .footer-link a { color: #aaa; font-size: 13px; text-decoration: none; cursor: pointer; }
         .footer-link a:hover { color: #bd2868; }
+
+        /* Style cho chủ đề Xanh Lam (Nhật Vy & Nhật Vy 2.0) */
+        body.theme-blue { background-color: #eef7ff; }
+        body.theme-blue .title { color: #1e88e5; }
+        body.theme-blue input[type="text"], body.theme-blue select { border-color: #bbdefb; }
+        body.theme-blue input[type="text"]:focus, body.theme-blue select:focus { border-color: #1e88e5; }
+        body.theme-blue .checkbox-group input[type="checkbox"] { accent-color: #1e88e5; }
+        body.theme-blue .btn-submit { background-color: #1e88e5; }
+        body.theme-blue .result-box { background-color: #f0f8ff; border-color: #1e88e5; }
+        body.theme-blue .result-title { color: #1e88e5; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2 class="title">🔗 Tạo Link Truyện</h2>
+        <h2 class="title" id="mainTitle">🔗 Tạo Link Truyện</h2>
 
         <div class="form-group">
             <label class="form-label">Thuộc page nào?</label>
-            <select id="pageSelect">
+            <select id="pageSelect" onchange="changeTheme()">
                 <option value="thanh-tuyet">❄️ Thanh Tuyết</option>
+                <option value="thanh-tuyet-2">❄️ Thanh Tuyết 2.0 (Tuyết rơi)</option>
+                <option value="nhat-vy">💙 Nhật Vy</option>
+                <option value="nhat-vy-2">💙 Nhật Vy 2.0</option>
             </select>
         </div>
 
@@ -67,9 +80,9 @@
 
         <button class="btn-submit" id="submitBtn" onclick="createLinkDirectly()">✨ Tạo link ngay</button>
 
-        <!-- Khung hiển thị link đã tạo và nút copy -->
+        <!-- Khung hiển thị kết quả copy -->
         <div class="result-box" id="resultBox">
-            <div class="result-title">LINK DẪN MỚI CỦA BẠN:</div>
+            <div class="result-title" id="resultTitle">LINK DẪN MỚI CỦA BẠN:</div>
             <div class="result-url" id="newUrlText"></div>
             <button class="btn-copy" onclick="copyResultLink()">📋 Sao chép link mới</button>
         </div>
@@ -83,7 +96,16 @@
         const REPO_OWNER = "thanhtuyet1310";
         const REPO_NAME = "truyen";
 
-        // Chuyển tên có dấu thành dạng slug không dấu
+        // Tự động đổi giao diện hồng/xanh tùy theo page chọn
+        function changeTheme() {
+            const page = document.getElementById('pageSelect').value;
+            if (page === 'nhat-vy' || page === 'nhat-vy-2') {
+                document.body.classList.add('theme-blue');
+            } else {
+                document.body.classList.remove('theme-blue');
+            }
+        }
+
         function toSlug(str) {
             str = str.toLowerCase();
             str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
@@ -97,7 +119,6 @@
             return str.trim().replace(/\s+/g, '-');
         }
 
-        // Tự điền tên truyện khi dán link
         function autoFillName() {
             const urlInput = document.getElementById('originUrl').value.trim();
             if (!urlInput) return;
@@ -111,7 +132,6 @@
             } catch (e) {}
         }
 
-        // Cài đặt Token
         function setupToken() {
             let token = prompt("Nhập GitHub Personal Access Token của bạn:");
             if (token) {
@@ -120,7 +140,6 @@
             }
         }
 
-        // Hàm sao chép link từ khung kết quả
         function copyResultLink() {
             const linkText = document.getElementById('newUrlText').innerText;
             if (linkText) {
@@ -129,11 +148,10 @@
             }
         }
 
-        // Tạo link tự động đẩy lên GitHub
         async function createLinkDirectly() {
             let token = localStorage.getItem("gh_token");
             if (!token) {
-                token = prompt("Vui lòng nhập GitHub Personal Access Token của bạn để kết nối hệ thống:");
+                token = prompt("Vui lòng nhập GitHub Personal Access Token của bạn:");
                 if (!token) return;
                 localStorage.setItem("gh_token", token.trim());
             }
@@ -141,6 +159,7 @@
             const targetUrl = document.getElementById('originUrl').value.trim();
             const rawName = document.getElementById('storyName').value.trim();
             const isVpn = document.getElementById('vpnRequired').checked;
+            const selectedPage = document.getElementById('pageSelect').value;
 
             if (!targetUrl || !rawName) {
                 alert("Vui lòng điền Link truyện gốc!");
@@ -150,10 +169,41 @@
             const slug = toSlug(rawName);
             const filePath = `${slug}/index.html`;
 
+            // Thông báo VPN chuẩn theo yêu cầu
             let extraNotice = '';
             if (isVpn) {
-                extraNotice = '<p style="color: #d32f2f; margin-top: 10px; font-weight: bold;">⚠️ Truyện này cần bật ứng dụng 1.1.1.1 (VPN) mới truy cập được!</p>';
+                extraNotice = '<p style="color: #d32f2f; margin-top: 15px; font-weight: bold; font-size: 14px; padding: 10px; background: rgba(211, 47, 47, 0.1); border-radius: 8px;">Nếu bạn không vào được trang web, hãy bật app 1.1.1.1 hoặc VPN, sau đó load lại là sẽ vào được nè</p>';
             }
+
+            // Đoạn code tuyết rơi cho Thanh Tuyết 2.0
+            let snowEffectCode = '';
+            if (selectedPage === 'thanh-tuyet-2') {
+                snowEffectCode = `
+    <style>
+        .snowflake { color: #fff; font-size: 1em; font-family: Arial, sans-serif; text-shadow: 0 0 5px #000; position: fixed; top: -10%; z-index: 9999; user-select: none; cursor: default; animation-name: snowflakes-fall, snowflakes-shake; animation-duration: 10s, 3s; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; }
+        @keyframes snowflakes-fall { 0% { top: -10%; } 100% { top: 100%; } }
+        @keyframes snowflakes-shake { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(80px); } }
+        .snowflake:nth-of-type(0) { left: 1%; animation-delay: 0s, 0s; }
+        .snowflake:nth-of-type(1) { left: 10%; animation-delay: 1s, 1s; }
+        .snowflake:nth-of-type(2) { left: 20%; animation-delay: 6s, .5s; }
+        .snowflake:nth-of-type(3) { left: 30%; animation-delay: 4s, 2s; }
+        .snowflake:nth-of-type(4) { left: 40%; animation-delay: 2s, 2s; }
+        .snowflake:nth-of-type(5) { left: 50%; animation-delay: 8s, 3s; }
+        .snowflake:nth-of-type(6) { left: 60%; animation-delay: 6s, 2s; }
+        .snowflake:nth-of-type(7) { left: 70%; animation-delay: 2.5s, 1s; }
+        .snowflake:nth-of-type(8) { left: 80%; animation-delay: 1s, 0s; }
+        .snowflake:nth-of-type(9) { left: 90%; animation-delay: 3s, 1.5s; }
+    </style>
+    <div class="snowflakes" aria-hidden="true">
+        <div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div>
+        <div class="snowflake">❆</div><div class="snowflake">❅</div><div class="snowflake">❆</div>
+        <div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div>
+    </div>`;
+            }
+
+            // Màu chủ đạo trang chuyển hướng
+            let mainThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#1e88e5' : '#bd2868';
+            let bgThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#eef7ff' : '#fff0f5';
 
             const htmlContent = `<!DOCTYPE html>
 <html lang="vi">
@@ -162,12 +212,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đang chuyển hướng...</title>
     <meta http-equiv="refresh" content="1; url=${targetUrl}">
+    ${snowEffectCode}
     <script>setTimeout(() => { window.location.href = "${targetUrl}"; }, 1000);<\/script>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #fff0f5;">
-    <h2 style="color: #bd2868;">Đang chuyển hướng đến trang đọc truyện...</h2>
+<body style="font-family: sans-serif; text-align: center; padding: 50px 20px; background-color: ${bgThemeColor};">
+    <h2 style="color: ${mainThemeColor};">Đang chuyển hướng đến trang đọc truyện...</h2>
     ${extraNotice}
-    <p style="margin-top: 20px; color: #666;">Nếu trình duyệt không tự chuyển, <a href="${targetUrl}" style="color: #bd2868;">bấm vào đây</a>.</p>
+    <p style="margin-top: 20px; color: #666;">Nếu trình duyệt không tự chuyển, <a href="${targetUrl}" style="color: ${mainThemeColor};">bấm vào đây</a>.</p>
 </body>
 </html>`;
 
@@ -203,25 +254,7 @@
                 if (uploadRes.ok) {
                     const finalUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${slug}/`;
                     
-                    // Tự động copy link
                     navigator.clipboard.writeText(finalUrl);
 
-                    // Hiển thị khung kết quả bên dưới để bấm copy lại nếu muốn
                     document.getElementById('newUrlText').innerText = finalUrl;
-                    document.getElementById('resultBox').style.display = 'block';
-
-                    alert(`✨ ĐÃ TẠO LINK THÀNH CÔNG!\n\nLink mới của bạn là:\n${finalUrl}\n\n(Đã tự động sao chép link. Sau 1-2 phút GitHub cập nhật xong là bấm vào được ngay!)`);
-                } else {
-                    const errData = await uploadRes.json();
-                    alert("⚠️ Lỗi: Token không hợp lệ hoặc sai quyền. Chi tiết: " + errData.message);
-                }
-            } catch (err) {
-                alert("⚠️ Có lỗi xảy ra: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "✨ Tạo link ngay";
-            }
-        }
-    </script>
-</body>
-</html>
+                    document
