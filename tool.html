@@ -31,7 +31,7 @@
         .footer-link a { color: #aaa; font-size: 13px; text-decoration: none; cursor: pointer; }
         .footer-link a:hover { color: #bd2868; }
 
-        /* Tone màu Xanh Lam cho Nhật Vy & Nhật Vy 2.0 */
+        /* Giao diện Xanh Lam cho Nhật Vy */
         body.theme-blue { background-color: #eef7ff; }
         body.theme-blue .title { color: #1e88e5; }
         body.theme-blue input[type="text"], body.theme-blue select { border-color: #bbdefb; }
@@ -59,7 +59,7 @@
 
         <div class="form-group">
             <label class="form-label">Link truyện gốc</label>
-            <input type="text" id="originUrl" placeholder="https://cunconthichanrau.com/novel/chim-tuoc-trong-tay-ao" oninput="autoFillName()">
+            <input type="text" id="originUrl" placeholder="https://cunconthichanrau.com/novel/chim-tuoc-trong-tay-ao" oninput="autoFillName()" onpaste="setTimeout(autoFillName, 50)" onchange="autoFillName()">
             <div class="sub-text">Dán link vào — tên truyện sẽ tự điền 🪄</div>
         </div>
 
@@ -91,11 +91,11 @@
     </div>
 
     <script>
-        const REPO_OWNER = "thanhtuyet1310";
-        const REPO_NAME = "truyen";
+        var REPO_OWNER = "thanhtuyet1310";
+        var REPO_NAME = "truyen";
 
         function changeTheme() {
-            const page = document.getElementById('pageSelect').value;
+            var page = document.getElementById('pageSelect').value;
             if (page === 'nhat-vy' || page === 'nhat-vy-2') {
                 document.body.classList.add('theme-blue');
             } else {
@@ -104,6 +104,7 @@
         }
 
         function toSlug(str) {
+            if (!str) return "";
             str = str.toLowerCase();
             str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
             str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
@@ -117,20 +118,27 @@
         }
 
         function autoFillName() {
-            const urlInput = document.getElementById('originUrl').value.trim();
+            var urlInput = document.getElementById('originUrl').value.trim();
             if (!urlInput) return;
             try {
-                const urlObj = new URL(urlInput);
-                const parts = urlObj.pathname.split('/').filter(p => p.length > 0);
+                var urlObj = new URL(urlInput);
+                var parts = urlObj.pathname.split('/').filter(function(p) { return p.length > 0; });
                 if (parts.length > 0) {
-                    let rawSlug = parts[parts.length - 1].replace(/\.html?$/i, '');
+                    var rawSlug = parts[parts.length - 1].replace(/\.html?$/i, '');
                     document.getElementById('storyName').value = decodeURIComponent(rawSlug).replace(/-/g, ' ');
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Nếu dán chuỗi không có https://
+                var partsAlt = urlInput.split('/').filter(function(p) { return p.length > 0; });
+                if (partsAlt.length > 0) {
+                    var rawSlugAlt = partsAlt[partsAlt.length - 1].replace(/\.html?$/i, '');
+                    document.getElementById('storyName').value = decodeURIComponent(rawSlugAlt).replace(/-/g, ' ');
+                }
+            }
         }
 
         function setupToken() {
-            let token = prompt("Nhập GitHub Personal Access Token của bạn:");
+            var token = prompt("Nhập GitHub Personal Access Token của bạn:");
             if (token) {
                 localStorage.setItem("gh_token", token.trim());
                 alert("Đã lưu token thành công!");
@@ -138,22 +146,19 @@
         }
 
         function copyResultLink() {
-            const linkText = document.getElementById('newUrlText').innerText;
+            var linkText = document.getElementById('newUrlText').innerText;
             if (linkText) {
                 navigator.clipboard.writeText(linkText);
                 alert("Đã sao chép link: " + linkText);
             }
         }
 
-        // Mã hóa UTF-8 an toàn sang Base64
         function utf8_to_b64(str) {
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
+            return btoa(unescape(encodeURIComponent(str)));
         }
 
         async function createLinkDirectly() {
-            let token = localStorage.getItem("gh_token");
+            var token = localStorage.getItem("gh_token");
             if (!token) {
                 token = prompt("Vui lòng nhập GitHub Personal Access Token của bạn:");
                 if (!token) return;
@@ -161,66 +166,68 @@
                 localStorage.setItem("gh_token", token);
             }
 
-            const targetUrl = document.getElementById('originUrl').value.trim();
-            const rawName = document.getElementById('storyName').value.trim();
-            const isVpn = document.getElementById('vpnRequired').checked;
-            const selectedPage = document.getElementById('pageSelect').value;
+            var targetUrl = document.getElementById('originUrl').value.trim();
+            var rawName = document.getElementById('storyName').value.trim();
+            var isVpn = document.getElementById('vpnRequired').checked;
+            var selectedPage = document.getElementById('pageSelect').value;
 
-            if (!targetUrl || !rawName) {
-                alert("Vui lòng điền đầy đủ Link truyện gốc và Tên bộ truyện!");
+            if (!targetUrl) {
+                alert("Vui lòng điền Link truyện gốc!");
                 return;
             }
 
-            const slug = toSlug(rawName);
+            if (!rawName) {
+                autoFillName();
+                rawName = document.getElementById('storyName').value.trim();
+            }
+
+            var slug = toSlug(rawName);
             if (!slug) {
-                alert("Tên bộ truyện không hợp lệ!");
+                alert("Vui lòng nhập Tên bộ truyện!");
                 return;
             }
 
-            const filePath = slug + "/index.html";
+            var filePath = slug + "/index.html";
 
-            let extraNotice = '';
+            var extraNotice = '';
             if (isVpn) {
                 extraNotice = '<p style="color: #d32f2f; margin-top: 15px; font-weight: bold; font-size: 14px; padding: 12px; background: rgba(211, 47, 47, 0.1); border-radius: 8px;">Nếu bạn không vào được trang web, hãy bật app 1.1.1.1 hoặc VPN, sau đó load lại là sẽ vào được nè</p>';
             }
 
-            let fallingEffectCode = '';
-            // Thanh Tuyết & Thanh Tuyết 2.0 -> Hiệu ứng tuyết rơi
+            var fallingEffectCode = '';
             if (selectedPage === 'thanh-tuyet' || selectedPage === 'thanh-tuyet-2') {
                 fallingEffectCode = '<style>.snowflake{color:#fff;font-size:1em;font-family:Arial,sans-serif;text-shadow:0 0 5px #000;position:fixed;top:-10%;z-index:9999;user-select:none;cursor:default;animation-name:snowflakes-fall,snowflakes-shake;animation-duration:10s,3s;animation-timing-function:linear,ease-in-out;animation-iteration-count:infinite,infinite}@keyframes snowflakes-fall{0%{top:-10%}100%{top:100%}}@keyframes snowflakes-shake{0%,100%{transform:translateX(0)}50%{transform:translateX(80px)}}.snowflake:nth-of-type(0){left:1%;animation-delay:0s,0s}.snowflake:nth-of-type(1){left:10%;animation-delay:1s,1s}.snowflake:nth-of-type(2){left:20%;animation-delay:6s,.5s}.snowflake:nth-of-type(3){left:30%;animation-delay:4s,2s}.snowflake:nth-of-type(4){left:40%;animation-delay:2s,2s}.snowflake:nth-of-type(5){left:50%;animation-delay:8s,3s}.snowflake:nth-of-type(6){left:60%;animation-delay:6s,2s}.snowflake:nth-of-type(7){left:70%;animation-delay:2.5s,1s}.snowflake:nth-of-type(8){left:80%;animation-delay:1s,0s}.snowflake:nth-of-type(9){left:90%;animation-delay:3s,1.5s}</style><div class="snowflakes" aria-hidden="true"><div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div><div class="snowflake">❆</div><div class="snowflake">❅</div></div>';
-            } 
-            // Nhật Vy & Nhật Vy 2.0 -> Hiệu ứng trái tim xanh rơi
-            else if (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') {
+            } else if (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') {
                 fallingEffectCode = '<style>.heartflake{color:#1e88e5;font-size:1.2em;position:fixed;top:-10%;z-index:9999;user-select:none;cursor:default;animation-name:hearts-fall,hearts-shake;animation-duration:9s,3s;animation-timing-function:linear,ease-in-out;animation-iteration-count:infinite,infinite}@keyframes hearts-fall{0%{top:-10%}100%{top:100%}}@keyframes hearts-shake{0%,100%{transform:translateX(0)}50%{transform:translateX(60px)}}.heartflake:nth-of-type(0){left:3%;animation-delay:0s,0s}.heartflake:nth-of-type(1){left:12%;animation-delay:1.5s,1s}.heartflake:nth-of-type(2){left:25%;animation-delay:5s,.5s}.heartflake:nth-of-type(3){left:35%;animation-delay:3s,2s}.heartflake:nth-of-type(4){left:45%;animation-delay:1s,2s}.heartflake:nth-of-type(5){left:55%;animation-delay:7s,3s}.heartflake:nth-of-type(6){left:68%;animation-delay:4s,2s}.heartflake:nth-of-type(7){left:78%;animation-delay:2s,1s}.heartflake:nth-of-type(8){left:88%;animation-delay:0.5s,0s}</style><div class="heartflakes" aria-hidden="true"><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div><div class="heartflake">💙</div></div>';
             }
 
-            let mainThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#1e88e5' : '#bd2868';
-            let bgThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#eef7ff' : '#fff0f5';
+            var mainThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#1e88e5' : '#bd2868';
+            var bgThemeColor = (selectedPage === 'nhat-vy' || selectedPage === 'nhat-vy-2') ? '#eef7ff' : '#fff0f5';
 
-            const htmlContent = '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Đang chuyển hướng...</title><meta http-equiv="refresh" content="1; url=' + targetUrl + '">' + fallingEffectCode + '<script>setTimeout(function(){ window.location.href = "' + targetUrl + '"; }, 1000);<\/script></head><body style="font-family: sans-serif; text-align: center; padding: 50px 20px; background-color: ' + bgThemeColor + ';"><h2 style="color: ' + mainThemeColor + ';">Đang chuyển hướng đến trang đọc truyện...</h2>' + extraNotice + '<p style="margin-top: 20px; color: #666;">Nếu trình duyệt không tự chuyển, <a href="' + targetUrl + '" style="color: ' + mainThemeColor + ';">bấm vào đây</a>.</p></body></html>';
+            var htmlContent = '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Đang chuyển hướng...</title><meta http-equiv="refresh" content="1; url=' + targetUrl + '">' + fallingEffectCode + '<script>setTimeout(function(){ window.location.href = "' + targetUrl + '"; }, 1000);<\/script></head><body style="font-family: sans-serif; text-align: center; padding: 50px 20px; background-color: ' + bgThemeColor + ';"><h2 style="color: ' + mainThemeColor + ';">Đang chuyển hướng đến trang đọc truyện...</h2>' + extraNotice + '<p style="margin-top: 20px; color: #666;">Nếu trình duyệt không tự chuyển, <a href="' + targetUrl + '" style="color: ' + mainThemeColor + ';">bấm vào đây</a>.</p></body></html>';
 
-            const btn = document.getElementById('submitBtn');
+            var btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.innerText = "⏳ Đang tạo link...";
 
             try {
-                let sha = "";
-                const checkRes = await fetch("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + filePath, {
+                var sha = "";
+                var checkRes = await fetch("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + filePath, {
                     headers: { "Authorization": "token " + token }
                 });
                 
                 if (checkRes.ok) {
-                    const checkData = await checkRes.json();
+                    var checkData = await checkRes.json();
                     sha = checkData.sha;
                 }
 
-                const bodyData = {
+                var bodyData = {
                     message: "Auto create link for " + slug,
                     content: utf8_to_b64(htmlContent)
                 };
                 if (sha) bodyData.sha = sha;
 
-                const uploadRes = await fetch("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + filePath, {
+                var uploadRes = await fetch("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + filePath, {
                     method: "PUT",
                     headers: {
                         "Authorization": "token " + token,
@@ -230,7 +237,7 @@
                 });
 
                 if (uploadRes.ok) {
-                    const finalUrl = "https://" + REPO_OWNER + ".github.io/" + REPO_NAME + "/" + slug + "/";
+                    var finalUrl = "https://" + REPO_OWNER + ".github.io/" + REPO_NAME + "/" + slug + "/";
                     
                     try {
                         navigator.clipboard.writeText(finalUrl);
@@ -241,7 +248,7 @@
 
                     alert("✨ ĐÃ TẠO LINK THÀNH CÔNG!\n\nLink mới của bạn là:\n" + finalUrl + "\n\n(Đã tự động sao chép link. Sau 1-2 phút GitHub cập nhật xong là bấm vào được ngay!)");
                 } else {
-                    const errData = await uploadRes.json();
+                    var errData = await uploadRes.json();
                     alert("⚠️ Lỗi từ GitHub: " + (errData.message || "Token không hợp lệ"));
                 }
             } catch (err) {
